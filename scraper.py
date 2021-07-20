@@ -1,18 +1,5 @@
-import numpy as np
-from selenium import webdriver
-from selenium.common import exceptions as SeleniumExcept
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-import os
-import time
-
-def initSeleniumDriver():
-    chromedriver = "chromedriver.exe"
-    os.environ["webdriver.chrome.driver"] = chromedriver
-    driver = webdriver.Chrome(chromedriver)
-    return driver
+from bs4 import BeautifulSoup
+import requests
 
 def GradeToPoint(Grade:str)->int:
     if(Grade == "O"):
@@ -31,13 +18,11 @@ def GradeToPoint(Grade:str)->int:
         return 0
 
 def GPACalculator(result:dict):
-    max_sub = len(result)+1
     total_credit = 0
     gpa_accum = 0
-    for iter in range(3,max_sub+1):
+    for iter in range(0,len(result)):
         gpa_accum += GradeToPoint(result[iter]['GRADE'])*float(result[iter]['CREDIT'])
-        total_credit += float(result[iter]['CREDIT'])
-        
+        total_credit += float(result[iter]['CREDIT']) 
     return gpa_accum/total_credit
 
 def isItValidRollNumber(RollNumber):
@@ -55,72 +40,48 @@ def isItValidRollNumber(RollNumber):
 
     return True
 
-def JntuResultScraper(RollNumber, ExamCode="1454",etype='r17', _type_="intgrade"):
+
+def JNTUResultAPI(RollNumber, ExamCode="1454", etype='r17', _type_="intgrade", server="results.jntuh.ac.in"):
     resultDict = {}
     randbirthday = "2001-11-11"
     if(isItValidRollNumber(RollNumber)):
         pass
     else:
-        raise(ValueError,"Roll-Number not Valid")
-    jntuResultUrl = f"http://results.jntuh.ac.in/jsp/SearchResult.jsp?degree=btech&examCode={ExamCode}&etype={etype}&type={_type_}"
-    driver = initSeleniumDriver()
-    
-    driver.get(jntuResultUrl)
-    time.sleep(0.1)
-    rollNoField  = driver.find_element_by_id('htno')
-    time.sleep(0.1)
-    rollNoField.click()
-    rollNoField.send_keys(RollNumber)
-    time.sleep(0.1)
-
-    datePicker = driver.find_element_by_id("datepicker")
-    datePicker.send_keys(randbirthday)
-    time.sleep(0.1)
-    driver.find_element_by_xpath( "/html/body/form/div/table/tbody/tr[2]/td[1]").click()
-    time.sleep(0.1)
-
-    captchaTxt = driver.find_element_by_id('txtCaptcha').get_attribute('value')
-    time.sleep(0.1)
-    driver.find_element_by_id("txtInput").send_keys(captchaTxt)
-    time.sleep(0.1)
-    driver.find_element_by_xpath("//*[@id=\"myForm\"]/div/table/tbody/tr[5]/td[3]/input").click()
-    
-    time.sleep(2)
-    try:
-        myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.TAG_NAME, 'img')))
-        print("Loaded")
-    except TimeoutException:
-        raise(TimeoutException,"Took took much time to load")
-    # result table iterator
-    ResEndFlag = True
-    rowIter = 1
-    while(ResEndFlag):
+        raise(ValueError, "Roll-Number not Valid")
+    jntuResultUrl = f"http://results.jntuh.ac.in/resultAction?degree=btech&examCode={ExamCode}&etype={etype}&type=intgrade&result=null&grad=null&htno={RollNumber}#"
+    payload = {}
+    headers = {
+        'Cookie': 'JSESSIONID=464656A62D7F6AFF4257BFAA544E0A84; cookiesession1=2D2443B1D1ZYJTB8GOLAEVRLKJTO4517'
+    }
+    response = requests.request("POST", jntuResultUrl, data=payload)
+    if(response.status_code >= 300):
+        return
+        
+    soup = BeautifulSoup(response.text, "html.parser")
+    resultTable = soup.find_all('table')[1]
+    tableRow = resultTable.find_all('tr')
+    for i in range(1,len(tableRow)):
+        tr = tableRow[i]
         try:
-            currentCol = []
-            for colIter in range(1,8):            
-                try:
-                    val = driver.find_element_by_xpath(f"/html/body/form/div[1]/table/tbody/tr[{rowIter}]/td[{colIter}]/h4/b").text
-                except:
-                    val = driver.find_element_by_xpath(f"/html/body/form/div[1]/table/tbody/tr[{rowIter}]/td[{colIter}]/b").text
-                currentCol.append(val)
-            rowIter+=1
-            resultDict[rowIter] = {
-                'SUB_CODE':currentCol[0],
-                'SUB_NAME':currentCol[1],
-                'INTERNAL':currentCol[2],
-                'EXTERNAL':currentCol[3],
-                'TOTAL':currentCol[4],
-                'GRADE':currentCol[5],
-                'CREDIT':currentCol[6]
+            currentCol = tr.text.split('\n')[1:-1]
+            resultDict[i-1] = {
+                'SUB_CODE': currentCol[0],
+                'SUB_NAME': currentCol[1],
+                'INTERNAL': currentCol[2],
+                'EXTERNAL': currentCol[3],
+                'TOTAL': currentCol[4],
+                'GRADE': currentCol[5],
+                'CREDIT': currentCol[6]
             }
-        except SeleniumExcept.NoSuchElementException as e:
+        except Exception as e:
             print(e)
             break
-    
+
     return resultDict
 
+
 if __name__ == "__main__":
-    resultDict = JntuResultScraper("18AG1A0437")
+    resultDict = JNTUResultAPI("XXXXXXXXXX")
     print(resultDict)
     print(GPACalculator(resultDict))
 
