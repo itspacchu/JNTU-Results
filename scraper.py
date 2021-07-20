@@ -14,6 +14,32 @@ def initSeleniumDriver():
     driver = webdriver.Chrome(chromedriver)
     return driver
 
+def GradeToPoint(Grade:str)->int:
+    if(Grade == "O"):
+        return 10
+    elif(Grade == 'A+'):
+        return 9
+    elif(Grade == 'A'):
+        return 8
+    elif(Grade == 'B+'):
+        return 7
+    elif(Grade == 'B'):
+        return 6
+    elif(Grade == 'C'):
+        return 5
+    else:
+        return 0
+
+def GPACalculator(result:dict):
+    max_sub = len(result)+1
+    total_credit = 0
+    gpa_accum = 0
+    for iter in range(3,max_sub+1):
+        gpa_accum += GradeToPoint(result[iter]['GRADE'])*float(result[iter]['CREDIT'])
+        total_credit += float(result[iter]['CREDIT'])
+        
+    return gpa_accum/total_credit
+
 def isItValidRollNumber(RollNumber):
     checks = 0
     if(len(RollNumber) != 10):
@@ -29,14 +55,14 @@ def isItValidRollNumber(RollNumber):
 
     return True
 
-def JntuResultScraper(RollNumber, ExamCode="1454", _type_="intgrade"):
+def JntuResultScraper(RollNumber, ExamCode="1454",etype='r17', _type_="intgrade"):
     resultDict = {}
     randbirthday = "2001-11-11"
     if(isItValidRollNumber(RollNumber)):
         pass
     else:
         raise(ValueError,"Roll-Number not Valid")
-    jntuResultUrl = f"http://results.jntuh.ac.in/jsp/SearchResult.jsp?degree=btech&examCode={ExamCode}&etype=r17&type={_type_}"
+    jntuResultUrl = f"http://results.jntuh.ac.in/jsp/SearchResult.jsp?degree=btech&examCode={ExamCode}&etype={etype}&type={_type_}"
     driver = initSeleniumDriver()
     
     driver.get(jntuResultUrl)
@@ -78,7 +104,8 @@ def JntuResultScraper(RollNumber, ExamCode="1454", _type_="intgrade"):
                     val = driver.find_element_by_xpath(f"/html/body/form/div[1]/table/tbody/tr[{rowIter}]/td[{colIter}]/b").text
                 currentCol.append(val)
             rowIter+=1
-            resultDict[currentCol[0]] = {
+            resultDict[rowIter] = {
+                'SUB_CODE':currentCol[0],
                 'SUB_NAME':currentCol[1],
                 'INTERNAL':currentCol[2],
                 'EXTERNAL':currentCol[3],
@@ -86,7 +113,6 @@ def JntuResultScraper(RollNumber, ExamCode="1454", _type_="intgrade"):
                 'GRADE':currentCol[5],
                 'CREDIT':currentCol[6]
             }
-            print('\n')
         except SeleniumExcept.NoSuchElementException as e:
             print(e)
             break
@@ -94,8 +120,9 @@ def JntuResultScraper(RollNumber, ExamCode="1454", _type_="intgrade"):
     return resultDict
 
 if __name__ == "__main__":
-    resultDict = JntuResultScraper("18AG1A0401")
+    resultDict = JntuResultScraper("18AG1A0437")
     print(resultDict)
+    print(GPACalculator(resultDict))
 
 
     
