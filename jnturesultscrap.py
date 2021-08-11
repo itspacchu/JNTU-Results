@@ -1,26 +1,13 @@
 from bs4 import BeautifulSoup
 import requests
-from pprint import pprint
-import itertools
-import threading
-import time
 import sys
+import json
 
-# Test multithread for loading animation
-# def animate(done = False):
-#     for c in itertools.cycle(['|', '/', '-', '\\']):
-#         if done:
-#             break
-#         sys.stdout.write('\rloading ' + c)
-#         sys.stdout.flush()
-#         time.sleep(0.1)
-#     sys.stdout.write('\rDone!     ')
-# t = threading.Thread(target=animate)
 
 class JNTUResult:
     SERVERS = ['http://results.jntuh.ac.in', 'http://202.63.105.184/results']
-    RECURSIVE_LIMIT = 5     ## Its better to not exceed 10
-    EXAM_CODE_TOL = 10      ## Better not to excede 20 
+    RECURSIVE_LIMIT = 5  # Its better to not exceed 10
+    EXAM_CODE_TOL = 10  # Better not to excede 20
 
     def __init__(self, rollNum: str, examCode: int, **kwargs):
         self.user = None
@@ -165,6 +152,25 @@ class JNTUResult:
 
 
 if __name__ == "__main__":
-    result = JNTUResult("18XX1A0XXX", 1454)     # 1454 works
-    # pprint(result.examCodeEstimate())
-    pprint(result.recursiveGet())
+    if(len(sys.argv) < 2):
+        print(
+            "Usage: python3 jnturesultscrap.py <roll_number> <examcode> <savefile [1/0]>")
+        exit(0)
+    elif(sys.argv[1] == "help"):
+        print(
+            "Usage: python3 jnturesultscrap.py <roll_number> <examcode> <savefile [1/0]>")
+        exit(0)
+    try:
+        writeToFile = int(sys.argv[3])
+    except IndexError:
+        writeToFile = 0
+    try:
+        jnturesult = JNTUResult(rollNum=sys.argv[1], examCode=sys.argv[2])
+        if(writeToFile):
+            with open(f"{sys.argv[1]}_RESULT.json", "w") as f:
+                json.dump(jnturesult.recursiveGet(), f)
+            print(f"Written to file {sys.argv[1]}_RESULT.json\n\n")
+        else:
+            print(jnturesult.recursiveGet())
+    except Exception as e:
+        print(e)
