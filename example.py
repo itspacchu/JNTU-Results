@@ -1,6 +1,6 @@
 # this script scrapes results from roll no 18AG1A0401 to 18AG1A0410
 
-from scraper import JNTUResult
+from jnturesultscrap import JNTUResult
 import time
 import json
 from tqdm import tqdm
