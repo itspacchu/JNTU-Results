@@ -60,14 +60,17 @@ class JNTUResult:
 
     @staticmethod
     def isValidRollNumber(rollNum: str = None) -> str:
+        # Apparantly rollnumbers can have all alphabets
+        # https://github.com/itspacchu/jntu-scraper/issues/2
+
+        rollNum = rollNum.upper()
         if(len(rollNum) != 10):
             raise ValueError("Roll-Number not 10 digit")
-        try:
-            int(rollNum[:2])
-            int(rollNum[-3:], base=19)  # G and H are in rollno
-        except ValueError:
-            raise ValueError("Roll-Number not Valid")
-        return rollNum
+
+        if(str(rollNum[-3]).isalnum()) and (str(rollNum[-2:]).isalnum()):
+            return rollNum.upper()
+        else:
+            raise ValueError("Roll-Number Invalid")
 
     def get_url(self, server: int = 0) -> str:
         params = [

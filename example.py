@@ -1,6 +1,6 @@
 # this script scrapes results from roll no 18AG1A0401 to 18AG1A0410
 
-from scraper import JNTUResult
+from jnturesultscrap import JNTUResult
 import time
 import json
 from tqdm import tqdm
@@ -17,10 +17,9 @@ def rollify(int_num):
     return rnopadded
 
 
-for i in tqdm(range(1, 10)):
-    rno = rollify(i)
-    result = JNTUResult(rno, 1454).JNTUResultAPI()
-    main_res_dict[rno] = result
+for i in tqdm(range(1, 9)):
+    result = JNTUResult(f"17AG1A04H{i}", 1463).JNTUResultAPI()
+    main_res_dict[f"17AG1A04H{i}"] = result
     time.sleep(3)
 
 print(main_res_dict)
