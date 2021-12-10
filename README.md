@@ -1,6 +1,8 @@
 # jntu-scraper
 Results page scraping of jntuh website
 
+## [Live Demo](https://enigmahubace.herokuapp.com/results)
+
 ## Basic usage
  
 ```python jnturesultscrap.py ROLLNO EXAMCODE SAVETOFILE``` 
