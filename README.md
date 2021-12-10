@@ -36,6 +36,3 @@ $python3 .\jnturesultscrap.py XXXXXXXXXX XXXX
 ## in API format
 [![itspacchu/APIs - GitHub](https://gh-card.dev/repos/itspacchu/APIs.svg)](https://github.com/itspacchu/APIs)
 <br>
-<br>
-## [Live Website](http://api.itspacchu.tk/results)
-
