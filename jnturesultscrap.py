@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 from bs4 import BeautifulSoup
 import requests
 import sys
@@ -6,7 +7,7 @@ import json
 
 class JNTUResult:
     SERVERS = ['http://results.jntuh.ac.in', 'http://202.63.105.184/results']
-    RECURSIVE_LIMIT = 5  # Its better to not exceed 10
+    RECURSIVE_LIMIT = 50  # Its better to not exceed 10
     EXAM_CODE_TOL = 10  # Better not to excede 20
 
     def __init__(self, rollNum: str, examCode: int, **kwargs):
@@ -119,7 +120,7 @@ class JNTUResult:
 
     def JNTUResultAPI(self):
         resultDict = []
-        response = requests.request("POST", self.url, timeout=5)
+        response = requests.request("POST", self.url, timeout=3)
 
         if(response.status_code >= 300):
             return
@@ -171,7 +172,10 @@ if __name__ == "__main__":
         jnturesult = JNTUResult(rollNum=sys.argv[1], examCode=sys.argv[2])
         if(writeToFile):
             with open(f"{sys.argv[1]}_RESULT.json", "w") as f:
-                json.dump(jnturesult.recursiveGet(), f)
+                fil = jnturesult.recursiveGet()
+                json.dump(fil, f)
+            # check if file exists
+            print(fil)
             print(f"Written to file {sys.argv[1]}_RESULT.json\n\n")
         else:
             print(jnturesult.recursiveGet())
